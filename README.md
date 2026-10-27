@@ -173,6 +173,39 @@ by a local mock server, and trace.moe is stubbed for the router test.
 .venv\Scripts\python.exe scripts\smoke_test.py --live   :: hits trace.moe
 ```
 
+## Live verification
+
+`scripts/verify_vision.py` checks the real engines with your own key instead of
+mocks. It builds a fixture set in `testframes/` (one frame per fixture: silent-era
+public-domain film and TV from archive.org, plus official Steam store screenshots
+for games), scans every frame through the same pipeline the app uses, and reports
+whether the media type and title matched the known ground truth. It writes
+`testframes/verification-report.json` and `.md`.
+
+```bat
+.venv\Scripts\python.exe scripts\verify_vision.py          :: verify all fixtures
+.venv\Scripts\python.exe scripts\verify_vision.py --gui    :: also drive the real window
+.venv\Scripts\python.exe scripts\verify_vision.py --list   :: show the fixture set
+.venv\Scripts\python.exe scripts\verify_vision.py --no-fetch
+```
+
+Fetching fixtures needs `imageio-ffmpeg` (a bundled ffmpeg binary) and network
+access:
+
+```bat
+.venv\Scripts\python.exe -m pip install imageio-ffmpeg
+```
+
+To verify modern film/TV frames, drop your own PNG/JPG into `testframes/` and add
+an entry to `testframes/manifest.json`:
+
+```json
+{"file": "my_frame.jpg", "expect_type": "tv", "expect_titles": ["severance"], "note": "S01E03 corridor"}
+```
+
+Unlabeled images are scanned and reported but excluded from the accuracy summary.
+Fixture media is git-ignored; only your own frames stay in the working copy.
+
 ## Notes and limitations
 
 - **Anime season numbers** are not part of trace.moe's response, so only the

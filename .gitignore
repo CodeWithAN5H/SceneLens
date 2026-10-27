@@ -6,3 +6,6 @@ __pycache__/
 assets/icon.png
 .tmp_preview/
 *.log
+
+# Live-verification fixtures (downloaded film/TV frames and Steam screenshots)
+testframes/
