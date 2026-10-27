@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+.ruff_cache/
+*.py[cod]
+.env
+assets/icon.png
+.tmp_preview/
+*.log
