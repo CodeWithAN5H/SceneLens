@@ -56,6 +56,36 @@ You can open a frame directly:
 .venv\Scripts\python.exe app.py "C:\screenshots\frame.png"
 ```
 
+## Standalone Windows build
+
+```bat
+build.bat
+```
+
+This installs PyInstaller into `.venv` and produces a single windowed
+`dist\SceneLens.exe` (about 23 MB) that bundles CPython, Tk, CustomTkinter
+(themes, fonts, icons), the tkdnd drag-and-drop extension and the app icon, so it
+runs on a Windows machine with no Python installed. `build.bat` is a thin wrapper
+around the checked-in PyInstaller recipe:
+
+```bat
+.venv\Scripts\python.exe -m PyInstaller --noconfirm --clean SceneLens.spec
+```
+
+The executable icon is generated from the same code-drawn artwork as the window
+icon (`scenelens/gui/glyphs.py`), so no binary asset is stored in the repository.
+`dist/` and `build/` are git-ignored.
+
+Notes:
+
+- One-file builds unpack to a temporary folder on every launch, so the first
+  window takes a few seconds to appear. For instant startup, switch the spec to a
+  folder build (`COLLECT` + `console=False`).
+- Scan history, settings and logs still live in the per-user app-data folder
+  (`%APPDATA%\SceneLens`), so updating `SceneLens.exe` never touches your data.
+- The exe is unsigned, so Windows SmartScreen may warn on first run.
+- `dist\SceneLens.exe frame.png` opens and identifies a frame immediately.
+
 ## API keys
 
 Anime matching works with no account. Results are labelled **unverified** until

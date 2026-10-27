@@ -37,10 +37,15 @@ def _configure_logging() -> Path:
         log_path, maxBytes=1_000_000, backupCount=2, encoding="utf-8"
     )
     file_handler.setFormatter(formatter)
-    console = logging.StreamHandler()
-    console.setFormatter(formatter)
+    handlers: list[logging.Handler] = [file_handler]
 
-    logging.basicConfig(level=logging.INFO, handlers=[file_handler, console])
+    # A windowed build has no console, so sys.stderr is None there.
+    if sys.stderr is not None:
+        console = logging.StreamHandler()
+        console.setFormatter(formatter)
+        handlers.append(console)
+
+    logging.basicConfig(level=logging.INFO, handlers=handlers)
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     return log_path
