@@ -1,16 +1,20 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller recipe for the standalone SceneLens.exe.
+"""PyInstaller recipe for the standalone SceneLens build.
 
-Build it with::
+Two shapes, selected by the ``SCENELENS_PACKAGE`` environment variable:
 
-    build.bat
-    .venv\\Scripts\\python.exe -m PyInstaller SceneLens.spec      (same thing, manually)
+* ``folder`` (default) — ``dist\\SceneLens\\SceneLens.exe`` plus its DLLs. Nothing
+  is unpacked on launch, so the window appears immediately.
+* ``onefile`` — a single ``dist\\SceneLens.exe`` that unpacks to a temp folder on
+  every start (slower launch, convenient for handing someone one file).
 
-The result is a single windowed ``dist\\SceneLens.exe`` that bundles CPython, Tk,
-CustomTkinter (themes, fonts, icons), the tkdnd drag-and-drop extension and the
-app icon, so it runs on a Windows machine with no Python installed.
+Build through ``build.bat``; it sets the variable for you::
+
+    build.bat             folder build
+    build.bat onefile     single-file build
 """
 
+import os
 from pathlib import Path
 import sys
 
@@ -22,6 +26,12 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from scenelens.config import APP_NAME  # noqa: E402
 from scenelens.gui.glyphs import app_icon  # noqa: E402
+
+ONE_FILE = os.environ.get("SCENELENS_PACKAGE", "folder").strip().lower() in {
+    "onefile",
+    "one-file",
+    "single",
+}
 
 # The window icon is drawn in code, so the executable icon is generated here from
 # the same artwork instead of shipping a binary asset in the repository.
@@ -68,19 +78,44 @@ analysis = Analysis(
 
 pyz = PYZ(analysis.pure)
 
-exe = EXE(
-    pyz,
-    analysis.scripts,
-    analysis.binaries,
-    analysis.datas,
-    [],
-    name=APP_NAME,
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=False,
-    runtime_tmpdir=None,
-    console=False,  # windowed app: no console window, diagnostics go to the log file
-    disable_windowed_traceback=False,
-    icon=str(ICON_PATH),
-)
+if ONE_FILE:
+    exe = EXE(
+        pyz,
+        analysis.scripts,
+        analysis.binaries,
+        analysis.datas,
+        [],
+        name=APP_NAME,
+        debug=False,
+        bootloader_ignore_signals=False,
+        strip=False,
+        upx=False,
+        runtime_tmpdir=None,
+        console=False,  # windowed app: no console, diagnostics go to the log file
+        disable_windowed_traceback=False,
+        icon=str(ICON_PATH),
+    )
+else:
+    # Folder build: the executable stays small and loads its DLLs in place.
+    exe = EXE(
+        pyz,
+        analysis.scripts,
+        [],
+        exclude_binaries=True,
+        name=APP_NAME,
+        debug=False,
+        bootloader_ignore_signals=False,
+        strip=False,
+        upx=False,
+        console=False,
+        disable_windowed_traceback=False,
+        icon=str(ICON_PATH),
+    )
+    bundle = COLLECT(
+        exe,
+        analysis.binaries,
+        analysis.datas,
+        strip=False,
+        upx=False,
+        name=APP_NAME,
+    )

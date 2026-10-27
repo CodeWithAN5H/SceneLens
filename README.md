@@ -58,33 +58,46 @@ You can open a frame directly:
 
 ## Standalone Windows build
 
+The default build is a **folder build**, which starts as fast as a normally
+installed app because nothing is unpacked at launch:
+
 ```bat
-build.bat
+build.bat                                  :: -> dist\SceneLens\SceneLens.exe  (default)
+build.bat onefile                          :: -> dist\SceneLens.exe            (single file)
 ```
 
-This installs PyInstaller into `.venv` and produces a single windowed
-`dist\SceneLens.exe` (about 23 MB) that bundles CPython, Tk, CustomTkinter
-(themes, fonts, icons), the tkdnd drag-and-drop extension and the app icon, so it
-runs on a Windows machine with no Python installed. `build.bat` is a thin wrapper
-around the checked-in PyInstaller recipe:
+Both shapes bundle CPython, Tk, CustomTkinter (themes, fonts, icons), the tkdnd
+drag-and-drop extension and the app icon, so they run on a Windows machine with
+no Python installed. `build.bat` installs PyInstaller into `.venv` and is a thin
+wrapper around the checked-in recipe:
 
 ```bat
+set SCENELENS_PACKAGE=folder      :: or onefile
 .venv\Scripts\python.exe -m PyInstaller --noconfirm --clean SceneLens.spec
 ```
 
-The executable icon is generated from the same code-drawn artwork as the window
-icon (`scenelens/gui/glyphs.py`), so no binary asset is stored in the repository.
-`dist/` and `build/` are git-ignored.
+Measured window-visible times on this machine (warm run, `SceneLens.exe frame.png`):
+
+| shape | output | launch | size |
+| --- | --- | --- | --- |
+| folder (default) | `dist\SceneLens\SceneLens.exe` | ~0.6 s | 5.5 MB exe in a 48 MB folder |
+| onefile | `dist\SceneLens.exe` | ~1.7 s | 23 MB single file |
+
+The first run of either shape is slower (cold file cache and a virus scan of the
+freshly written output). Copy the folder build anywhere — it is relocatable —
+while the single file is convenient when you need to hand over one file.
 
 Notes:
 
-- One-file builds unpack to a temporary folder on every launch, so the first
-  window takes a few seconds to appear. For instant startup, switch the spec to a
-  folder build (`COLLECT` + `console=False`).
+- The executable icon is generated from the same code-drawn artwork as the window
+  icon (`scenelens/gui/glyphs.py`), so no binary asset is stored in the
+  repository. `dist/` and `build/` are git-ignored.
+- Building one shape removes the other shape's output from `dist/` so the folder
+  never shows a stale executable.
 - Scan history, settings and logs still live in the per-user app-data folder
-  (`%APPDATA%\SceneLens`), so updating `SceneLens.exe` never touches your data.
-- The exe is unsigned, so Windows SmartScreen may warn on first run.
-- `dist\SceneLens.exe frame.png` opens and identifies a frame immediately.
+  (`%APPDATA%\SceneLens`), so replacing the executable never touches your data.
+- The executables are unsigned, so Windows SmartScreen may warn on first run.
+- `SceneLens.exe frame.png` opens and identifies a frame immediately.
 
 ## API keys
 
