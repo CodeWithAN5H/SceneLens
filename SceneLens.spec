@@ -24,7 +24,16 @@ PROJECT_ROOT = Path(SPECPATH).resolve()
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from scenelens.config import APP_NAME  # noqa: E402
+from scenelens.config import (  # noqa: E402
+    APP_NAME,
+    APP_FILE_VERSION,
+    APP_MAJOR,
+    APP_MINOR,
+    APP_PATCH,
+    APP_AUTHOR,
+    APP_DESCRIPTION,
+    APP_COPYRIGHT,
+)
 from scenelens.gui.glyphs import app_icon  # noqa: E402
 
 ONE_FILE = os.environ.get("SCENELENS_PACKAGE", "folder").strip().lower() in {
@@ -32,6 +41,51 @@ ONE_FILE = os.environ.get("SCENELENS_PACKAGE", "folder").strip().lower() in {
     "one-file",
     "single",
 }
+
+# Windows version resource: makes Explorer show proper file properties
+# (File description, Company, File version, Product version, Copyright).
+from PyInstaller.utils.win32.versioninfo import (  # noqa: E402
+    VSVersionInfo,
+    FixedFileInfo,
+    StringFileInfo,
+    StringStruct,
+    StringTable,
+    VarFileInfo,
+    VarStruct,
+)
+
+version_info = VSVersionInfo(
+    ffi=FixedFileInfo(
+        filevers=APP_FILE_VERSION,
+        prodvers=APP_FILE_VERSION,
+        mask=0x3F,
+        flags=0x0,
+        OS=0x40004,
+        fileType=0x1,
+        subtype=0x0,
+        date=(0, 0),
+    ),
+    kids=[
+        StringFileInfo(
+            [
+                StringTable(
+                    "040904B0",
+                    [
+                        StringStruct("CompanyName", APP_AUTHOR),
+                        StringStruct("FileDescription", APP_DESCRIPTION),
+                        StringStruct("FileVersion", f"{APP_MAJOR}.{APP_MINOR}.{APP_PATCH}.0"),
+                        StringStruct("ProductVersion", f"{APP_MAJOR}.{APP_MINOR}.{APP_PATCH}.0"),
+                        StringStruct("InternalName", APP_NAME),
+                        StringStruct("LegalCopyright", APP_COPYRIGHT),
+                        StringStruct("OriginalFilename", f"{APP_NAME}.exe"),
+                        StringStruct("ProductName", APP_NAME),
+                    ],
+                )
+            ]
+        ),
+        VarFileInfo([VarStruct("Translation", [1033, 1200])]),
+    ],
+)
 
 # The window icon is drawn in code, so the executable icon is generated here from
 # the same artwork instead of shipping a binary asset in the repository.
@@ -94,6 +148,7 @@ if ONE_FILE:
         console=False,  # windowed app: no console, diagnostics go to the log file
         disable_windowed_traceback=False,
         icon=str(ICON_PATH),
+        version=version_info,
     )
 else:
     # Folder build: the executable stays small and loads its DLLs in place.
@@ -110,6 +165,7 @@ else:
         console=False,
         disable_windowed_traceback=False,
         icon=str(ICON_PATH),
+        version=version_info,
     )
     bundle = COLLECT(
         exe,

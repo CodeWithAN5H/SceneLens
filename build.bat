@@ -4,22 +4,27 @@ REM dependencies included, no Python needed on the target machine).
 REM
 REM   build.bat            folder build (default) -> dist\SceneLens\SceneLens.exe
 REM   build.bat onefile    single executable       -> dist\SceneLens.exe
+REM   build.bat installer  folder build + Windows installer
+REM                        -> dist\SceneLens-Setup-<version>.exe
 setlocal
 cd /d "%~dp0"
 
 set "PACKAGE=folder"
+set "MAKE_INSTALLER=0"
 if /I "%~1"=="onefile" set "PACKAGE=onefile"
 if /I "%~1"=="single" set "PACKAGE=onefile"
 if /I "%~1"=="folder" set "PACKAGE=folder"
 if /I "%~1"=="onedir" set "PACKAGE=folder"
+if /I "%~1"=="installer" set "MAKE_INSTALLER=1"
 
 if "%~1"=="" goto :package_ready
 if /I "%~1"=="onefile" goto :package_ready
 if /I "%~1"=="single" goto :package_ready
 if /I "%~1"=="folder" goto :package_ready
 if /I "%~1"=="onedir" goto :package_ready
+if /I "%~1"=="installer" goto :package_ready
 echo [SceneLens] Unknown option "%~1".
-echo [SceneLens] Usage: build.bat [folder^|onefile]
+echo [SceneLens] Usage: build.bat [folder^|onefile^|installer]
 exit /b 2
 
 :package_ready
@@ -50,11 +55,42 @@ if errorlevel 1 goto :error
 
 if /I "%PACKAGE%"=="onefile" goto :report_onefile
 
+if "%MAKE_INSTALLER%"=="1" goto :build_installer
+
 echo.
 echo [SceneLens] Built the folder build: dist\SceneLens\SceneLens.exe
 echo [SceneLens] Run it with:   dist\SceneLens\SceneLens.exe
 echo [SceneLens] Or a frame:    dist\SceneLens\SceneLens.exe frame.png
 echo [SceneLens] Single file?   build.bat onefile
+echo [SceneLens] Installer?     build.bat installer
+exit /b 0
+
+:build_installer
+echo [SceneLens] Compiling the Windows installer...
+".venv\Scripts\python.exe" -c "from scenelens.config import APP_VERSION; print(APP_VERSION)" > "build\app_version.txt"
+if not exist "build\app_version.txt" goto :error
+set /p APP_VERSION=<"build\app_version.txt"
+del /q "build\app_version.txt"
+if not defined APP_VERSION (
+    echo [SceneLens] Could not read APP_VERSION from scenelens\config.py.
+    goto :error
+)
+set "ISCC="
+for %%P in (
+    "%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe"
+    "%ProgramFiles%\Inno Setup 6\ISCC.exe"
+    "%LocalAppData%\Programs\Inno Setup 6\ISCC.exe"
+) do if not defined ISCC if exist %%~P set "ISCC=%%~P"
+if not defined ISCC (
+    echo [SceneLens] Inno Setup 6 not found. Install it first, e.g.:
+    echo             winget install --id JRSoftware.InnoSetup
+    goto :error
+)
+"%ISCC%" /DMyAppVersion=%APP_VERSION% installer\SceneLens.iss
+if errorlevel 1 goto :error
+echo.
+echo [SceneLens] Built the installer: dist\SceneLens-Setup-%APP_VERSION%.exe
+echo [SceneLens] Silent install:     SceneLens-Setup-%APP_VERSION%.exe /VERYSILENT
 exit /b 0
 
 :report_onefile

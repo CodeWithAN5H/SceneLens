@@ -26,6 +26,14 @@ APP_NAME = "SceneLens"
 APP_TAGLINE = "universal scene identifier"
 APP_VERSION = "1.0.0"
 
+# Windows file-properties metadata (embedded as a PE version resource by
+# PyInstaller and by the installer compiler).
+APP_FILE_VERSION = (1, 0, 0, 0)
+APP_MAJOR, APP_MINOR, APP_PATCH = APP_FILE_VERSION[:3]
+APP_AUTHOR = "SceneLens"
+APP_DESCRIPTION = "Universal scene identifier — movie, TV and game frame recognition"
+APP_COPYRIGHT = f"Copyright (C) {APP_MAJOR} {APP_AUTHOR}"
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # A local .env is a convenient way to keep development keys out of source.

@@ -87,6 +87,39 @@ The first run of either shape is slower (cold file cache and a virus scan of the
 freshly written output). Copy the folder build anywhere — it is relocatable —
 while the single file is convenient when you need to hand over one file.
 
+### Windows installer
+
+For distribution, build a proper installer with file properties shown in
+Explorer (right-click the exe → Properties → Details):
+
+```bat
+build.bat installer                     :: -> dist\SceneLens-Setup-1.0.0.exe
+```
+
+This builds the folder shape first, then compiles [installer/SceneLens.iss](installer/SceneLens.iss)
+with [Inno Setup 6](https://jrsoftware.org/isinfo.php) (install it once with
+`winget install --id JRSoftware.InnoSetup`). The installer:
+
+- installs per-user into `%LOCALAPPDATA%\Programs\SceneLens` — no admin prompt;
+- creates Start Menu entries and an optional desktop shortcut;
+- registers an uninstaller in Windows Apps & Features;
+- leaves `%APPDATA%\SceneLens` (settings, history, exports) untouched when
+  uninstalling;
+- embeds its own version resource, so `SceneLens-Setup-1.0.0.exe` shows the
+  same 1.0.0.0 file properties as the app.
+
+Silent install / uninstall (useful for scripted rollouts):
+
+```bat
+SceneLens-Setup-1.0.0.exe /VERYSILENT /NORESTART
+%LOCALAPPDATA%\Programs\SceneLens\unins000.exe /VERYSILENT /NORESTART
+```
+
+Both `SceneLens.exe` and the setup exe embed a PE version resource generated
+from the constants in `scenelens/config.py` (`APP_VERSION`, `APP_DESCRIPTION`,
+…), so bump the version there once — the app build and the installer both pick
+it up.
+
 Notes:
 
 - The executable icon is generated from the same code-drawn artwork as the window
